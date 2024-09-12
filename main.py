@@ -4,12 +4,17 @@ import jieba
 import string
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
-
+import cProfile
 
 def read_file(file_path):
-    with open(file_path, 'r', encoding='utf-8') as f:
-        return f.read()
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"文件路径错误或文件不存在: {file_path}")
+
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        raise IOError(f"读取文件时出错: {e}")
 
 
 def preprocess_text(text):
@@ -55,32 +60,43 @@ def save_similarity_to_file(output_file, similarity):
     """
     将相似度结果保存到指定文件，保留两位小数
     """
-    with open(output_file, 'w', encoding='utf-8') as f:
-        f.write(f"{similarity:.2f}")
+    try:
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(f"{similarity:.2f}")
+    except Exception as e:
+        raise IOError(f"写入文件时出错: {e}")
 
 
 def plagiarism_check(orig_file, plagiarism_file, output_file):
     """
     主函数：计算两个文本的相似度并保存结果
     """
-    # 读取文件
-    orig_text = read_file(orig_file)
-    plagiarism_text = read_file(plagiarism_file)
+    try:
+        # 读取文件
+        orig_text = read_file(orig_file)
+        plagiarism_text = read_file(plagiarism_file)
 
-    # 文本预处理
-    processed_orig_text = preprocess_text(orig_text)
-    processed_plagiarism_text = preprocess_text(plagiarism_text)
+        # 文本预处理
+        processed_orig_text = preprocess_text(orig_text)
+        processed_plagiarism_text = preprocess_text(plagiarism_text)
 
-    # 向量化处理
-    tfidf_matrix = vectorize_texts(processed_orig_text, processed_plagiarism_text)
+        # 向量化处理
+        tfidf_matrix = vectorize_texts(processed_orig_text, processed_plagiarism_text)
 
-    # 计算相似度
-    similarity = calculate_cosine_similarity(tfidf_matrix)
+        # 计算相似度
+        similarity = calculate_cosine_similarity(tfidf_matrix)
 
-    # 保存相似度结果
-    save_similarity_to_file(output_file, similarity)
+        # 保存相似度结果
+        save_similarity_to_file(output_file, similarity)
 
-    print(f"相似度已计算并保存至文件: {output_file}")
+        print(f"相似度已计算并保存至文件: {output_file}")
+
+    except FileNotFoundError as fnf_error:
+        print(fnf_error)
+    except IOError as io_error:
+        print(io_error)
+    except Exception as e:
+        print(f"发生错误: {e}")
 
 
 if __name__ == "__main__":
@@ -94,3 +110,4 @@ if __name__ == "__main__":
 
         # 执行查重
         plagiarism_check(orig_file, plagiarism_file, output_file)
+    cProfile.run("plagiarism_check(orig_file, plagiarism_file, output_file)", filename="performance_analysis_result")
