@@ -1,10 +1,11 @@
+import re
 import sys
 import os
 import jieba
-import string
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import cProfile
+
 
 def read_file(file_path):
     if not os.path.exists(file_path):
@@ -19,14 +20,14 @@ def read_file(file_path):
 
 def preprocess_text(text):
     """
-    文本预处理：去除标点符号，换行符，并进行分词
+    文本预处理：去除标点符号，并进行分词
     """
     # 避免输入文本为空出错
     if not text:
         return ""
 
     # 去除标点符号和换行符
-    text = text.translate(str.maketrans('', '', string.punctuation + '\n\r\t'))
+    text = re.sub(r'[^\w\s]', '', text)
 
     # 使用 jieba 进行分词
     words = jieba.lcut(text)
@@ -103,6 +104,7 @@ if __name__ == "__main__":
     # 从命令行获取文件路径
     if len(sys.argv) != 4:
         print("使用方法: python plagiarism_check.py <原文文件路径> <抄袭版文件路径> <输出文件路径>")
+        sys.exit(1)
     else:
         orig_file = sys.argv[1]
         plagiarism_file = sys.argv[2]
